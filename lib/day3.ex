@@ -4,7 +4,6 @@ defmodule Day3 do
     |> Enum.with_index()
     |> Enum.reduce(%{adjacent: %{}, symbols: []}, &build_adjacency_map/2)
     |> get_part_numbers()
-    |> Enum.sum()
   end
 
   def part_two(input) do
@@ -45,6 +44,7 @@ defmodule Day3 do
     end)
     |> Enum.map(&Map.values/1)
     |> List.flatten()
+    |> Enum.sum()
   end
 
   defp get_gears(%{adjacent: adjacent, symbols: symbols}) do

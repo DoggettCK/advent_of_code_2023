@@ -5,7 +5,7 @@ defmodule Day2 do
     input
     |> Enum.map(&parse_game/1)
     |> Enum.filter(&game_valid?/1)
-    |> Enum.map(&(&1.id))
+    |> Enum.map(& &1.id)
     |> Enum.sum()
   end
 
@@ -17,8 +17,7 @@ defmodule Day2 do
   end
 
   defp parse_game(line) do
-    [[id_str, play_lines]] =
-      Regex.scan(~r/Game (\d+): (.*)/, line, capture: :all_but_first)
+    [[id_str, play_lines]] = Regex.scan(~r/Game (\d+): (.*)/, line, capture: :all_but_first)
 
     %{
       id: String.to_integer(id_str),

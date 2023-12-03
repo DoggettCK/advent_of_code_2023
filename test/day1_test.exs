@@ -3,14 +3,14 @@ defmodule Day1Test do
 
   test "part one" do
     assert 55538 ==
-      load_input()
-      |> Day1.part_one()
+             load_input()
+             |> Day1.part_one()
   end
 
   test "part two" do
     assert 54875 ==
-      load_input()
-      |> Day1.part_two()
+             load_input()
+             |> Day1.part_two()
   end
 
   defp load_input(example \\ false) do

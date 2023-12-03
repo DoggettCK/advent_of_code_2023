@@ -17,7 +17,7 @@ defmodule Day1 do
     "six" => 6,
     "seven" => 7,
     "eight" => 8,
-    "nine" => 9,
+    "nine" => 9
   }
 
   def part_one(input) do
@@ -46,7 +46,6 @@ defmodule Day1 do
         first_and_last(rest, first, last)
 
       {d, _} ->
-
         if first == -1 do
           first_and_last(rest, d, d)
         else
@@ -60,11 +59,12 @@ defmodule Day1 do
   end
 
   defp first_and_last_number_or_word("", first, last), do: first * 10 + last
+
   for {s, d} <- @numbers do
     defp first_and_last_number_or_word(unquote(s) <> rest, first, _last) do
       # use the word, but put all but the first character back on the rest of
       # the string to catch things like oneight, sevenine, etc...
-      <<_::binary-size(1), rest_of_match::binary()>> = unquote(s)
+      <<_::binary-size(1), rest_of_match::binary>> = unquote(s)
 
       if first == -1 do
         first_and_last_number_or_word(rest_of_match <> rest, unquote(d), unquote(d))
@@ -74,7 +74,7 @@ defmodule Day1 do
     end
   end
 
-  defp first_and_last_number_or_word(<<_::binary-size(1), rest::binary()>>, first, last) do
+  defp first_and_last_number_or_word(<<_::binary-size(1), rest::binary>>, first, last) do
     first_and_last_number_or_word(rest, first, last)
   end
 end

@@ -1,22 +1,22 @@
-defmodule Day3Test do
+defmodule Day4Test do
   use ExUnit.Case
 
   test "part one" do
-    assert 514_969 ==
+    assert 22193 ==
              load_input()
-             |> Day3.part_one()
+             |> Day4.part_one()
   end
 
   test "part two" do
-    assert 78_915_902 ==
+    assert 5_625_994 ==
              load_input()
-             |> Day3.part_two()
+             |> Day4.part_two()
   end
 
   defp load_input(example \\ false) do
     input_file = if example, do: "example", else: "real"
 
-    "test/fixtures/day3/#{input_file}"
+    "test/fixtures/day4/#{input_file}"
     |> File.read!()
     |> String.split("\n", trim: true)
   end

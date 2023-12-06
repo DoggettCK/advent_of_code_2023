@@ -2,14 +2,14 @@ defmodule Day5Test do
   use ExUnit.Case
 
   test "part one" do
-    assert nil ==
-             load_input(true)
+    assert 240_320_250 ==
+             load_input()
              |> Day5.part_one()
   end
 
   test "part two" do
-    assert nil ==
-             load_input(true)
+    assert 677_937_579 ==
+             load_input()
              |> Day5.part_two()
   end
 

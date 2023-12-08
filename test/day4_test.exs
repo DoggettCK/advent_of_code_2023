@@ -1,23 +1,28 @@
 defmodule Day4Test do
   use ExUnit.Case
+  import AdventOfCode2023.Test.Common
 
-  test "part one" do
-    assert 22193 ==
-             load_input()
+  test "part one example" do
+    assert 13 ==
+             load_input(4, "example")
              |> Day4.part_one()
   end
 
-  test "part two" do
-    assert 5_625_994 ==
-             load_input()
+  test "part one real" do
+    assert 22193 ==
+             load_input(4, "real")
+             |> Day4.part_one()
+  end
+
+  test "part two example" do
+    assert 30 ==
+             load_input(4, "example")
              |> Day4.part_two()
   end
 
-  defp load_input(example \\ false) do
-    input_file = if example, do: "example", else: "real"
-
-    "test/fixtures/day4/#{input_file}"
-    |> File.read!()
-    |> String.split("\n", trim: true)
+  test "part two real" do
+    assert 5_625_994 ==
+             load_input(4, "real")
+             |> Day4.part_two()
   end
 end

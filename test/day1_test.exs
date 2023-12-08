@@ -1,23 +1,28 @@
 defmodule Day1Test do
   use ExUnit.Case
+  import AdventOfCode2023.Test.Common
 
-  test "part one" do
-    assert 55538 ==
-             load_input()
+  test "part one example" do
+    assert 198 ==
+             load_input(1, "example")
              |> Day1.part_one()
   end
 
-  test "part two" do
-    assert 54875 ==
-             load_input()
+  test "part one real" do
+    assert 55538 ==
+             load_input(1, "real")
+             |> Day1.part_one()
+  end
+
+  test "part two example" do
+    assert 281 ==
+             load_input(1, "example")
              |> Day1.part_two()
   end
 
-  defp load_input(example \\ false) do
-    input_file = if example, do: "example", else: "real"
-
-    "test/fixtures/day1/#{input_file}"
-    |> File.read!()
-    |> String.split("\n", trim: true)
+  test "part two real" do
+    assert 54875 ==
+             load_input(1, "real")
+             |> Day1.part_two()
   end
 end

@@ -4,4 +4,5 @@ defmodule Day9 do
 
   def part_two(_input) do
   end
+
 end

@@ -1,7 +1,7 @@
 defmodule Day6 do
   def part_one(input) do
     input
-    |> Enum.map(&line_to_integers/1)
+    |> Enum.map(&Common.string_to_integers/1)
     |> Enum.zip()
     |> Enum.map(&ways_to_win/1)
     |> Enum.product()
@@ -13,15 +13,8 @@ defmodule Day6 do
     |> part_one()
   end
 
-  defp line_to_integers(line) do
-    ~r/\d+/
-    |> Regex.scan(line)
-    |> List.flatten()
-    |> Enum.map(&String.to_integer/1)
-  end
-
   defp ways_to_win({time, record}) do
-    [a, b, c] = [1, -time, record]
+    [_a, b, c] = [1, -time, record]
 
     disc = :math.sqrt(b * b - 4 * c)
 

@@ -13,6 +13,10 @@ defmodule Day5 do
   end
 
   # Common
+  defp interval(start, count) do
+    start..(start + count - 1)
+  end
+
   defp parse_almanac(lines) do
     parse_almanac(lines, :start, %{})
   end
@@ -24,12 +28,12 @@ defmodule Day5 do
   end
 
   defp parse_almanac(["seeds: " <> seeds | rest], _state, almanac) do
-    seed_list = line_to_integers(seeds)
+    seed_list = Common.string_to_integers(seeds)
 
     seed_ranges =
       seed_list
       |> Enum.chunk_every(2)
-      |> Enum.map(fn [start, count] -> [start, start + count - 1] end)
+      |> Enum.map(fn [start, count] -> interval(start, count) end)
 
     updated =
       almanac
@@ -68,11 +72,20 @@ defmodule Day5 do
   end
 
   defp parse_almanac([line | rest], state, almanac) do
-    [dest, src, count] = line_to_integers(line)
+    [dest, src, count] = Common.string_to_integers(line)
 
     interval = %{
-      dest: [dest, dest + count - 1],
-      src: [src, src + count - 1]
+      dest: dest,
+      src: src,
+      range: count,
+      shift: dest - src,
+      transform: fn id ->
+        if id in interval(src, count) do
+          {:ok, id + dest - src}
+        else
+          :out_of_range
+        end
+      end
     }
 
     updated = Map.update(almanac, state, [interval], &[interval | &1])
@@ -84,23 +97,6 @@ defmodule Day5 do
     almanac
   end
 
-  defp line_to_integers(line) do
-    ~r/\d+/
-    |> Regex.scan(line)
-    |> List.flatten()
-    |> Enum.map(&String.to_integer/1)
-  end
-
-  defp source_to_destination(id, []), do: id
-
-  defp source_to_destination(id, [%{dest: [dest_start, _], src: [src_start, src_stop]} | rest]) do
-    if id in src_start..src_stop do
-      dest_start - src_start + id
-    else
-      source_to_destination(id, rest)
-    end
-  end
-
   # Day 1
   defp find_locations_for_seeds(almanac) do
     Enum.map(almanac.seeds, fn seed_id -> seed_to_location(seed_id, almanac) end)
@@ -108,158 +104,28 @@ defmodule Day5 do
 
   defp seed_to_location(seed_id, almanac) do
     seed_id
-    |> get_soil_from_seed(almanac)
-    |> get_fertilizer_from_soil(almanac)
-    |> get_water_from_fertilizer(almanac)
-    |> get_light_from_water(almanac)
-    |> get_temperature_from_light(almanac)
-    |> get_humidity_from_temperature(almanac)
-    |> get_location_from_humidity(almanac)
+    |> source_to_destination(almanac.seed_to_soil)
+    |> source_to_destination(almanac.soil_to_fertilizer)
+    |> source_to_destination(almanac.fertilizer_to_water)
+    |> source_to_destination(almanac.water_to_light)
+    |> source_to_destination(almanac.light_to_temperature)
+    |> source_to_destination(almanac.temperature_to_humidity)
+    |> source_to_destination(almanac.humidity_to_location)
   end
 
-  defp get_soil_from_seed(id, almanac) do
-    source_to_destination(id, almanac.seed_to_soil)
-  end
+  defp source_to_destination(position, []), do: position
 
-  defp get_fertilizer_from_soil(id, almanac) do
-    source_to_destination(id, almanac.soil_to_fertilizer)
-  end
+  defp source_to_destination(position, [%{transform: transform} | rest]) do
+    case transform.(position) do
+      {:ok, transformed} ->
+        transformed
 
-  defp get_water_from_fertilizer(id, almanac) do
-    source_to_destination(id, almanac.fertilizer_to_water)
-  end
-
-  defp get_light_from_water(id, almanac) do
-    source_to_destination(id, almanac.water_to_light)
-  end
-
-  defp get_temperature_from_light(id, almanac) do
-    source_to_destination(id, almanac.light_to_temperature)
-  end
-
-  defp get_humidity_from_temperature(id, almanac) do
-    source_to_destination(id, almanac.temperature_to_humidity)
-  end
-
-  defp get_location_from_humidity(id, almanac) do
-    source_to_destination(id, almanac.humidity_to_location)
+      :out_of_range ->
+        source_to_destination(position, rest)
+    end
   end
 
   # Day 2
-  defp find_locations_for_seed_ranges(almanac) do
-    # NOTE: Currently incorrect, but giving up for now
-    almanac.seed_ranges
-    |> Enum.map(&seed_range_to_location(&1, almanac))
-    |> List.flatten()
-    |> Enum.take_every(2)
-    |> Enum.min()
-  end
-
-  defp seed_range_to_location(seed_range, almanac) do
-    seed_range
-    |> List.wrap()
-    |> get_soil_ranges_from_seed(almanac)
-    |> get_fertilizer_ranges_from_soil(almanac)
-    |> get_water_ranges_from_fertilizer(almanac)
-    |> get_light_ranges_from_water(almanac)
-    |> get_temperature_ranges_from_light(almanac)
-    |> get_humidity_ranges_from_temperature(almanac)
-    |> get_location_ranges_from_humidity(almanac)
-  end
-
-  defp get_soil_ranges_from_seed(range, almanac) do
-    split_and_transform_ranges(range, almanac.seed_to_soil)
-  end
-
-  defp get_fertilizer_ranges_from_soil(range, almanac) do
-    split_and_transform_ranges(range, almanac.soil_to_fertilizer)
-  end
-
-  defp get_water_ranges_from_fertilizer(range, almanac) do
-    split_and_transform_ranges(range, almanac.fertilizer_to_water)
-  end
-
-  defp get_light_ranges_from_water(range, almanac) do
-    split_and_transform_ranges(range, almanac.water_to_light)
-  end
-
-  defp get_temperature_ranges_from_light(range, almanac) do
-    split_and_transform_ranges(range, almanac.light_to_temperature)
-  end
-
-  defp get_humidity_ranges_from_temperature(range, almanac) do
-    split_and_transform_ranges(range, almanac.temperature_to_humidity)
-  end
-
-  defp get_location_ranges_from_humidity(range, almanac) do
-    split_and_transform_ranges(range, almanac.humidity_to_location)
-  end
-
-  defp inspect_ranges(list, label) do
-    IO.inspect(length(list), label: "Length", charlists: :as_lists)
-    IO.inspect(list, label: label, charlists: :as_lists)
-  end
-
-  defp split_and_transform_ranges(seed_range, mapped_ranges) do
-    Enum.map(mapped_ranges, fn mapped_range ->
-      split_and_transform_range(seed_range, mapped_range)
-    end)
-    |> List.flatten()
-    |> Enum.chunk_every(2)
-    |> Enum.uniq()
-  end
-
-  defp split_and_transform_range(range, mapped_range) do
-    [range_start, range_stop | _] = List.flatten(range)
-
-    %{
-      src: [src_start, src_stop],
-      dest: [dest_start, dest_stop]
-    } = mapped_range
-
-    cond do
-      range_stop < src_start ->
-        # Range entirely before mapped, no transform
-        [range_start, range_stop]
-
-      range_start > src_stop ->
-        # Range entirely after mapped, no transform
-        [range_start, range_stop]
-
-      range_start < src_start and range_stop > src_stop ->
-        # Range entirely covers source
-        # No transform for parts before and after
-        # Transform middle, which is just entire src->dest
-        [
-          [range_start, src_start - 1],
-          [dest_start, dest_stop],
-          [src_stop + 1, range_stop]
-        ]
-
-      range_start >= src_start and range_stop <= src_stop ->
-        # Range entirely inside source
-        # Transform with offset
-        [range_start + dest_start - src_start, range_stop + dest_start - src_start]
-
-      range_start < src_start and range_stop in src_start..src_stop ->
-        # Range overlaps source on left, starting before source start, ending inside source
-        # before or at source stop
-        # Range before source not transformed
-        # Overlapping range transformed
-        [
-          [range_start, src_start - 1],
-          [dest_start, range_stop + dest_start - src_start]
-        ]
-
-      range_start in src_start..src_stop and range_stop > src_stop ->
-        # Range overlaps source on right, starting inside source, ending after source stop
-        # before or at source stop
-        # Range before source not transformed
-        # Overlapping range transformed
-        [
-          [range_start + dest_start - src_start, dest_stop],
-          [src_stop + 1, range_stop]
-        ]
-    end
+  defp find_locations_for_seed_ranges(_almanac) do
   end
 end

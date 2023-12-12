@@ -3,13 +3,13 @@ defmodule Day10Test do
   import AdventOfCode2023.Test.Common
 
   test "part one example" do
-    assert nil ==
+    assert 8 ==
              load_input(10, "example")
              |> Day10.part_one()
   end
 
   test "part one real" do
-    assert nil ==
+    assert 6738 ==
              load_input(10, "real")
              |> Day10.part_one()
   end

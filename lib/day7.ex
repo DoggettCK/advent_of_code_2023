@@ -75,7 +75,7 @@ defmodule Day7 do
         # No jokers, just use regular type calculation
         hand_type(cards)
 
-      {joker_count, remaining} ->
+      {_, remaining} ->
         remaining
         |> Map.values()
         |> Enum.sort()

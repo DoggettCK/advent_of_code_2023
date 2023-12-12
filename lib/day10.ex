@@ -8,7 +8,14 @@ defmodule Day10 do
     |> find_furthest()
   end
 
-  def part_two(_input) do
+  def part_two(input) do
+    input
+    |> Enum.with_index()
+    |> Enum.reduce(%{}, &build_grid/2)
+    |> calculate_start_neighbors()
+    |> flood_fill()
+    |> hd()
+    |> calculate_area()
   end
 
   # Part 1
@@ -93,5 +100,26 @@ defmodule Day10 do
     |> MapSet.intersection(ms_two)
     |> Enum.max_by(fn {_, _, d} -> d end)
     |> elem(2)
+  end
+
+  # Part 2
+  defp calculate_area(points_list) do
+    indexed = Enum.into(points_list, %{}, fn {k, v} -> {v, k} end)
+
+    loop_length = map_size(indexed)
+
+    loop_area =
+      0..(loop_length - 1)
+      |> Enum.chunk_every(2, 1, Stream.cycle([0]))
+      |> Enum.reduce(0, fn [current, next], acc ->
+        {current_x, current_y} = Map.get(indexed, current)
+        {next_x, next_y} = Map.get(indexed, next)
+
+        acc + (current_x * next_y - current_y * next_x)
+      end)
+      |> abs()
+      |> div(2)
+
+    loop_area - div(loop_length, 2) + 1
   end
 end

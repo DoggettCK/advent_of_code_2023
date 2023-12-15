@@ -10,13 +10,11 @@ defmodule Day5 do
     input
     |> parse_almanac()
     |> find_locations_for_seed_ranges()
+    |> Enum.map(&elem(&1, 0))
+    |> Enum.min()
   end
 
   # Common
-  defp interval(start, count) do
-    start..(start + count - 1)
-  end
-
   defp parse_almanac(lines) do
     parse_almanac(lines, :start, %{})
   end
@@ -33,7 +31,7 @@ defmodule Day5 do
     seed_ranges =
       seed_list
       |> Enum.chunk_every(2)
-      |> Enum.map(fn [start, count] -> interval(start, count) end)
+      |> Enum.map(fn [start, range] -> {start, start + range - 1} end)
 
     updated =
       almanac
@@ -72,20 +70,14 @@ defmodule Day5 do
   end
 
   defp parse_almanac([line | rest], state, almanac) do
-    [dest, src, count] = Common.string_to_integers(line)
+    [dest, src, range] = Common.string_to_integers(line)
 
     interval = %{
       dest: dest,
       src: src,
-      range: count,
+      src_stop: src + range - 1,
       shift: dest - src,
-      transform: fn id ->
-        if id in interval(src, count) do
-          {:ok, id + dest - src}
-        else
-          :out_of_range
-        end
-      end
+      range: range
     }
 
     updated = Map.update(almanac, state, [interval], &[interval | &1])
@@ -115,17 +107,85 @@ defmodule Day5 do
 
   defp source_to_destination(position, []), do: position
 
-  defp source_to_destination(position, [%{transform: transform} | rest]) do
-    case transform.(position) do
-      {:ok, transformed} ->
-        transformed
-
-      :out_of_range ->
-        source_to_destination(position, rest)
+  defp source_to_destination(position, [%{src: src, src_stop: src_stop, shift: shift} | rest]) do
+    if position in src..src_stop do
+      position + shift
+    else
+      source_to_destination(position, rest)
     end
   end
 
   # Day 2
-  defp find_locations_for_seed_ranges(_almanac) do
+  defp find_locations_for_seed_ranges(almanac) do
+    almanac.seed_ranges
+    |> Enum.flat_map(&transform_ranges(&1, almanac.seed_to_soil))
+    |> Enum.flat_map(&transform_ranges(&1, almanac.soil_to_fertilizer))
+    |> Enum.flat_map(&transform_ranges(&1, almanac.fertilizer_to_water))
+    |> Enum.flat_map(&transform_ranges(&1, almanac.water_to_light))
+    |> Enum.flat_map(&transform_ranges(&1, almanac.light_to_temperature))
+    |> Enum.flat_map(&transform_ranges(&1, almanac.temperature_to_humidity))
+    |> Enum.flat_map(&transform_ranges(&1, almanac.humidity_to_location))
+  end
+
+  def transform_ranges({min, max} = input_range, mapping_ranges) do
+    min_src = Enum.min_by(mapping_ranges, & &1.src).src
+    max_src = Enum.max_by(mapping_ranges, & &1.src_stop).src_stop
+
+    if max < min_src or min > max_src do
+      List.wrap(input_range)
+    else
+      split_ranges(input_range, min_src, max_src, mapping_ranges, [])
+    end
+  end
+
+  def split_ranges({min, max}, min_src, max_src, mapping_ranges, acc) do
+    acc
+    |> add_left_non_overlapping(min, min_src)
+    |> add_right_non_overlapping(max, max_src)
+    |> add_intersecting_ranges(max(min, min_src), min(max, max_src), mapping_ranges)
+  end
+
+  def add_left_non_overlapping(acc, min, min_src) when min < min_src,
+    do: [{min, min_src - 1} | acc]
+
+  def add_left_non_overlapping(acc, _, _), do: acc
+
+  def add_right_non_overlapping(acc, max, max_src) when max > max_src,
+    do: [{max_src + 1, max} | acc]
+
+  def add_right_non_overlapping(acc, _, _), do: acc
+
+  def add_intersecting_ranges(acc, min, max, mapping_ranges) do
+    Enum.reduce(mapping_ranges, acc, &build_intersecting_range(&1, &2, min, max, mapping_ranges))
+  end
+
+  defp build_intersecting_range(%{src_stop: src_stop}, acc, min, _, _) when min > src_stop,
+    do: acc
+
+  defp build_intersecting_range(%{src: src, src_stop: src_stop, shift: shift}, acc, min, max, _)
+       when min >= src and max < src_stop + 1 do
+    [{min + shift, max + shift} | acc]
+  end
+
+  defp build_intersecting_range(
+         %{src: src, src_stop: src_stop} = input,
+         acc,
+         min,
+         max,
+         mapping_ranges
+       )
+       when min >= src and max > src_stop do
+    %{dest: dest, range: range, shift: shift} = input
+
+    mapping_ranges
+    |> Enum.reject(fn
+      ^input -> true
+      _ -> false
+    end)
+    |> then(&add_intersecting_ranges([{min + shift, dest + range} | acc], src + range, max, &1))
+  end
+
+  defp build_intersecting_range(_, acc, _, _, _) do
+    acc
   end
 end

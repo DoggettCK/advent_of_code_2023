@@ -15,13 +15,13 @@ defmodule Day5Test do
   end
 
   test "part two example" do
-    assert nil ==
+    assert 46 ==
              load_input(5, "example")
              |> Day5.part_two()
   end
 
   test "part two real" do
-    assert nil ==
+    assert 28_580_589 ==
              load_input(5, "real")
              |> Day5.part_two()
   end

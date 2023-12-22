@@ -35,13 +35,11 @@ defmodule Day12 do
   end
 
   defp cache_get(key) do
-    {:ok, value} = Cachex.get(:day12, key)
-
-    value
+    Cachex.get(:day12, key)
   end
 
   defp cache_put(key, value) do
-    Cachex.put(:day12, key, value)
+    {:ok, true} = Cachex.put(:day12, key, value)
 
     value
   end
@@ -50,41 +48,42 @@ defmodule Day12 do
   defp count([], _), do: 0
 
   defp count(springs, []) do
-    if "#" in springs, do: 0, else: 1
+    if Enum.member?(springs, "#"), do: 0, else: 1
   end
 
-  defp count([next | rest] = springs, [count | remaining] = counts) do
+  defp count([next | _] = springs, counts) do
     cache_key = {springs, counts}
 
     case cache_get(cache_key) do
-      nil ->
+      {:ok, nil} ->
         result = skip_unplaceable(springs, counts)
 
-        cond do
-          next in ["#", "?"] ->
+        case next do
+          "#" ->
             result + place_and_count(springs, counts)
 
-          true ->
+          "?" ->
+            result + place_and_count(springs, counts)
+
+          _ ->
             result
         end
         |> then(&cache_put(cache_key, &1))
 
-      value ->
+      {:ok, value} ->
         value
     end
   end
 
-  defp skip_unplaceable([next | springs], counts) when next in [".", "?"] do
-    count(springs, counts)
-  end
-
+  defp skip_unplaceable(["." | springs], counts), do: count(springs, counts)
+  defp skip_unplaceable(["?" | springs], counts), do: count(springs, counts)
   defp skip_unplaceable(_, _), do: 0
 
   defp place_and_count(springs, [count | _]) when count > length(springs), do: 0
 
-  defp place_and_count([next | rest] = springs, [count | _] = counts) do
+  defp place_and_count(springs, [count | _] = counts) do
     cond do
-      springs |> Enum.slice(0, count) |> Enum.member?(".") ->
+      springs |> Enum.take(count) |> Enum.member?(".") ->
         0
 
       count == length(springs) ->
